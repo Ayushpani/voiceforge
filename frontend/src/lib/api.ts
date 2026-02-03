@@ -171,6 +171,20 @@ class ApiClient {
     getPreviewUrl(modelId: string): string {
         return `${this.baseUrl}/api/voice/models/${modelId}/preview`;
     }
+    async generatePodcast(script: string, speakerMap: Record<string, string>): Promise<{ id: string, url: string, duration: number, segments: any[] }> {
+        const response = await this.fetchWithTimeout(`${this.baseUrl}/api/podcast/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ script, speaker_map: speakerMap }),
+        }, 600000); // 10m timeout for podcast
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ detail: 'Podcast generation failed' }));
+            throw new Error(error.detail || 'Podcast generation failed');
+        }
+
+        return response.json();
+    }
 }
 
 export const api = new ApiClient();

@@ -8,9 +8,10 @@ from contextlib import asynccontextmanager
 import logging
 import os
 
-from app.routers import audio, voice, generation
+from app.routers import audio, voice, generation, podcast
 from app.services.voice_cloner import VoiceClonerService
 from app.services.denoiser import DenoiserService
+from app.services.podcast_engine import PodcastService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,6 +34,10 @@ async def lifespan(app: FastAPI):
     logger.info("Loading voice cloner service (may take a moment)...")
     app.state.voice_cloner = VoiceClonerService()
     logger.info("Voice cloner loaded successfully")
+
+    logger.info("Loading podcast service...")
+    app.state.podcast_service = PodcastService(app.state.voice_cloner)
+    logger.info("Podcast service loaded successfully")
     
     yield
     
@@ -59,6 +64,7 @@ app.add_middleware(
 app.include_router(audio.router, prefix="/api/audio", tags=["Audio"])
 app.include_router(voice.router, prefix="/api/voice", tags=["Voice"])
 app.include_router(generation.router, prefix="/api/generate", tags=["Generation"])
+app.include_router(podcast.router, prefix="/api/podcast", tags=["Podcast"])
 
 
 @app.get("/health")

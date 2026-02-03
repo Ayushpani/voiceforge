@@ -28,7 +28,15 @@ export default function Home() {
           </div>
         </div>
 
-        <ThemeToggle />
+        <div className="flex items-center gap-4">
+          <a
+            href="/podcast"
+            className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-emerald-500 transition-colors"
+          >
+            🎙️ Podcast Studio
+          </a>
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* Main content */}

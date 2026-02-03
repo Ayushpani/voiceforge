@@ -27,6 +27,7 @@ VoiceForge enables users to clone voices from audio samples and generate speech 
 
 - Voice cloning from audio samples (minimum 30 seconds)
 - Text-to-speech generation with cloned voices
+- **🎙️ Podcast Studio** - Create multi-speaker podcasts with screenplay-style scripts
 - Speed and pitch adjustment via post-processing
 - Automatic audio denoising and format conversion
 - Real-time progress streaming via Server-Sent Events
@@ -250,6 +251,80 @@ Content-Type: application/json
 
 Response: text/event-stream
 ```
+
+### Podcast Endpoints
+
+#### Generate Podcast
+```
+POST /api/podcast/generate
+Content-Type: application/json
+
+{
+  "script": "Speaker 1: Hello!\nSpeaker 2: Hi there!",
+  "speaker_map": {
+    "Speaker 1": "voice-model-id-1",
+    "Speaker 2": "voice-model-id-2"
+  },
+  "title": "My Podcast"
+}
+
+Response:
+{
+  "id": "string",
+  "title": "string",
+  "url": "/api/podcast/audio/{id}",
+  "duration": number,
+  "segments": [...]
+}
+```
+
+#### Get Podcast Audio
+```
+GET /api/podcast/audio/{podcast_id}
+Response: audio/wav file
+```
+
+---
+
+## 🎙️ Podcast Studio
+
+The Podcast Studio allows you to create multi-speaker podcasts by casting your cloned voices to different speakers and writing a screenplay-style script.
+
+### How to Use
+
+1. **Navigate to Podcast Studio**
+   - Click "🎙️ Podcast Studio" in the dashboard header
+   - Or go to `http://localhost:3000/podcast`
+
+2. **Cast Your Voices**
+   - Browse available voice models in the left sidebar
+   - Drag and drop voices onto the "Speaker 1" and "Speaker 2" slots on the stage
+
+3. **Write Your Script**
+   - Use screenplay format: `SpeakerName: Dialogue text`
+   - Example:
+     ```
+     Speaker 1: Welcome to our podcast!
+     Speaker 2: Thanks for having me. This is going to be great.
+     Speaker 1: Let's dive right in.
+     ```
+
+4. **Generate**
+   - Click the green "Generate" button
+   - Wait for each segment to be processed (shown in console)
+   - Play or download the final stitched audio
+
+### Script Format
+
+```
+Speaker 1: First speaker's dialogue goes here.
+Speaker 2: Second speaker responds.
+Speaker 1: And so on...
+```
+
+- Each line must start with the speaker name followed by a colon
+- Multi-line dialogue for the same speaker is automatically joined
+- Speakers are separated by empty lines (optional)
 
 ---
 

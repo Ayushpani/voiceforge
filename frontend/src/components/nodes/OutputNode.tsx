@@ -14,7 +14,10 @@ function OutputNode() {
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+
+
 
     const {
         voiceModelId,
@@ -41,24 +44,23 @@ function OutputNode() {
         }
     };
 
-    useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
+    // Audio event handlers
+    const onTimeUpdate = () => {
+        if (audioRef.current && !isDragging) {
+            setCurrentTime(audioRef.current.currentTime);
+        }
+    };
 
-        const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-        const handleDurationChange = () => setDuration(audio.duration);
-        const handleEnded = () => setIsPlaying(false);
+    const onLoadedMetadata = () => {
+        if (audioRef.current) {
+            const d = audioRef.current.duration;
+            if (isFinite(d)) {
+                setDuration(d);
+            }
+        }
+    };
 
-        audio.addEventListener('timeupdate', handleTimeUpdate);
-        audio.addEventListener('durationchange', handleDurationChange);
-        audio.addEventListener('ended', handleEnded);
-
-        return () => {
-            audio.removeEventListener('timeupdate', handleTimeUpdate);
-            audio.removeEventListener('durationchange', handleDurationChange);
-            audio.removeEventListener('ended', handleEnded);
-        };
-    }, [generatedAudioUrl]);
+    const onEnded = () => setIsPlaying(false);
 
     const togglePlay = () => {
         const audio = audioRef.current;
@@ -73,9 +75,11 @@ function OutputNode() {
     };
 
     const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const audio = audioRef.current;
-        if (!audio) return;
-        audio.currentTime = parseFloat(e.target.value);
+        const time = parseFloat(e.target.value);
+        setCurrentTime(time);
+        if (audioRef.current) {
+            audioRef.current.currentTime = time;
+        }
     };
 
     const handleGenerate = async () => {
@@ -181,7 +185,13 @@ function OutputNode() {
                 {/* Audio player */}
                 {generatedAudioUrl && !isNodeProcessing && (
                     <div className="space-y-3 p-3 bg-zinc-800 rounded-lg">
-                        <audio ref={audioRef} src={generatedAudioUrl} />
+                        <audio
+                            ref={audioRef}
+                            src={generatedAudioUrl}
+                            onTimeUpdate={onTimeUpdate}
+                            onLoadedMetadata={onLoadedMetadata}
+                            onEnded={onEnded}
+                        />
 
                         {/* Controls */}
                         <div className="flex items-center gap-3">
@@ -203,6 +213,10 @@ function OutputNode() {
                                     max={duration || 100}
                                     value={currentTime}
                                     onChange={handleSeek}
+                                    onMouseDown={() => setIsDragging(true)}
+                                    onMouseUp={() => setIsDragging(false)}
+                                    onTouchStart={() => setIsDragging(true)}
+                                    onTouchEnd={() => setIsDragging(false)}
                                     className="w-full h-2 bg-zinc-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-grab"
                                 />
                                 <div className="flex justify-between text-xs text-zinc-500">

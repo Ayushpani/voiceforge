@@ -10,6 +10,7 @@ import json
 import uuid
 import os
 import asyncio
+import copy
 from pathlib import Path
 from datetime import datetime
 import soundfile as sf
@@ -110,16 +111,24 @@ class VoiceClonerService:
         return metadata
     
     def load_voice_model(self, model_id: str) -> tuple:
-        """Load a voice model by ID."""
+        """Load a voice model by ID - regenerates state from original audio."""
         model_dir = self.voice_models_dir / model_id
         
         if not model_dir.exists():
              raise FileNotFoundError(f"Model {model_id} not found")
 
-        voice_state = torch.load(model_dir / "voice_state.pt", weights_only=False)
-        
+        # Load metadata
         with open(model_dir / "metadata.json") as f:
             metadata = json.load(f)
+        
+        # IMPORTANT: Regenerate voice_state from original audio each time
+        # The .pt cache can become corrupted and is not reliable
+        original_audio_path = model_dir / "original.wav"
+        if not original_audio_path.exists():
+            raise FileNotFoundError(f"Original audio for model {model_id} not found")
+        
+        print(f"Regenerating voice state from {original_audio_path}...")
+        voice_state = self.tts_model.get_state_for_audio_prompt(str(original_audio_path))
         
         return voice_state, metadata
     
@@ -159,10 +168,12 @@ class VoiceClonerService:
             )
         
         # Generate audio using Pocket-TTS (Heavy CPU op)
+        # IMPORTANT: Deep copy voice_state as Pocket-TTS mutates it during generation
         print(f"Generating audio for '{text}'...")
+        voice_state_copy = copy.deepcopy(voice_state)
         audio = await asyncio.to_thread(
             self.tts_model.generate_audio,
-            voice_state, 
+            voice_state_copy, 
             text
         )
         print(f"Generation complete for {output_id}")
