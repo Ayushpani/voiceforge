@@ -1,0 +1,21 @@
+
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/voice_models/
+backend/uploads/
+backend/ffmpeg-master-latest-win64-gpl/
+backend/ffmpeg.zip
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/out/
+
+# General
+.DS_Store
+.vscode/
+docx/
